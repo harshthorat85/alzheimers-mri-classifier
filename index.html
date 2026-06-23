@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alzheimer's MRI Classifier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="header-tag">ResNet-18 · OASIS-1 Dataset · Research Prototype</div>
+            <h1><span class="brain-icon">🧠</span> Alzheimer's MRI Classifier</h1>
+            <p class="subtitle">Upload a 2D axial structural T1-weighted MRI slice to evaluate cortical atrophy patterns using a fine-tuned deep learning model.</p>
+        </header>
+
+        <div class="grid">
+            <!-- Upload Panel -->
+            <div class="card upload-card">
+                <div class="card-label">INPUT</div>
+                <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                    <div class="drop-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="drop-title">Drop your MRI slice here</p>
+                    <p class="drop-hint">Accepts .jpg, .png, .tiff — axial T1-weighted recommended</p>
+                    <span class="btn-browse">Browse Files</span>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                </div>
+                <div class="preview-wrapper" id="previewWrapper" style="display: none;">
+                    <img id="previewImage" class="mri-preview" src="#" alt="MRI Scan Preview">
+                    <div class="preview-label">
+                        <span class="mono" id="previewFilename">scan.jpg</span>
+                        <span class="change-link" onclick="document.getElementById('fileInput').click()">Change</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="card metrics-card">
+                <div class="card-label">DIAGNOSTIC OUTPUT</div>
+                <h3>Confidence Distribution</h3>
+
+                <div id="warningBanner" class="warning-banner" style="display: none;"></div>
+
+                <div id="resultsContainer">
+                    <div class="placeholder-state">
+                        <div class="placeholder-bars">
+                            <div class="ph-bar" style="width: 80%"></div>
+                            <div class="ph-bar" style="width: 55%"></div>
+                            <div class="ph-bar" style="width: 35%"></div>
+                            <div class="ph-bar" style="width: 20%"></div>
+                        </div>
+                        <p class="placeholder-text">Awaiting scan submission…</p>
+                    </div>
+                </div>
+
+                <footer class="clinical-disclaimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span><strong>Research use only.</strong> Trained on ~300 samples from OASIS-1. Not validated for clinical diagnostics or patient care decisions.</span>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
