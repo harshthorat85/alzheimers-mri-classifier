@@ -1,0 +1,11 @@
+# CPU-only PyTorch — the full GPU build is 2GB+ and will exceed
+# free-tier limits on Render/Railway. If deploying to a GPU host, replace
+# these two lines with: torch==2.3.0 and torchvision==0.18.0
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.3.0+cpu
+torchvision==0.18.0+cpu
+
+fastapi==0.111.0
+uvicorn==0.30.1
+pillow==10.3.0
+python-multipart==0.0.9
