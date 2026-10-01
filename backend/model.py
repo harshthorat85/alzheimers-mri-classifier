@@ -1,0 +1,33 @@
+import torch
+import torch.nn as nn
+from torchvision import models
+
+
+def get_alzheimer_model(model_path=None, device='cpu', num_classes=3):
+    """
+    Initializes the ResNet-18 architecture with the custom Dropout +
+    Linear classifier head used during training.
+
+    Args:
+        model_path  : path to a saved .pt weights file, or None for
+                      a freshly initialized (untrained) model.
+        device      : 'cpu' or 'cuda'
+        num_classes : number of output classes (3 for CN / MCI / AD)
+
+    Returns:
+        model in eval mode, moved to `device`
+    """
+    model = models.resnet18()
+    num_ftrs = model.fc.in_features
+
+    model.fc = nn.Sequential(
+        nn.Dropout(p=0.4),
+        nn.Linear(num_ftrs, num_classes)
+    )
+
+    if model_path is not None:
+        state_dict = torch.load(model_path, map_location=device, weights_only=True)
+        model.load_state_dict(state_dict)
+        print(f"Weights loaded from: {model_path}")
+
+    return model.to(device).eval()
