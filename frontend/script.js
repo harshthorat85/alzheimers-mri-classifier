@@ -12,7 +12,7 @@ const MODELS = [
         tag: "Recommended",
         tagClass: "tag-good",
         description: "CN vs MCI vs AD, trained on 235 age-matched, CDR-rated subjects.",
-        metrics: [["Macro F1", "0.471"], ["Macro AUC", "0.718"]],
+        metrics: [["Macro F1", "0.429"], ["Macro AUC", "0.723"]],
         disclaimer: "Trained on 235 age-matched OASIS-1 subjects (5-fold subject-level CV).",
     },
     {
@@ -29,10 +29,22 @@ const MODELS = [
         name: "Original 3-class",
         tag: "Age-confounded",
         tagClass: "tag-warn",
-        description: "Included 201 young adults with no CDR rating as cognitively normal, so it partly learned age instead of disease. Shown for comparison.",
-        metrics: [["Macro F1", "0.638"], ["Macro AUC", "0.811"]],
-        disclaimer: "Trained on OASIS-1 data that included 201 unrated young adults as controls, and evaluated on a single 66-scan test split. Its scores are inflated by age confounding.",
+        description: "Included 201 young adults with no CDR rating as cognitively normal, so it partly learned age instead of disease. On this cohort, a model using only age reaches 0.83 AUC. Shown for comparison.",
+        metrics: [["Macro F1 (single split)", "0.638"], ["Macro AUC (single split)", "0.811"]],
+        disclaimer: "Trained on OASIS-1 data that included 201 unrated young adults as controls, and evaluated on a single 66-scan test split. Its scores are inflated by age confounding. It also used different preprocessing, so its output on the sample scans is illustrative only.",
     },
+];
+
+// ── Sample Scans ──────────────────────────────────────────────────────────────
+// PNGs in /samples, exported from the training .npz (three stacked axial slices
+// stored as the R, G and B channels, which is the input the corrected models expect).
+const SAMPLES = [
+    { file: "samples/cn_1.png",  label: "CN 1" },
+    { file: "samples/cn_2.png",  label: "CN 2" },
+    { file: "samples/mci_1.png", label: "MCI 1" },
+    { file: "samples/mci_2.png", label: "MCI 2" },
+    { file: "samples/ad_1.png",  label: "AD 1" },
+    { file: "samples/ad_2.png",  label: "AD 2" },
 ];
 
 let selectedModel = MODELS[0].id;
@@ -51,6 +63,7 @@ const modelPicker      = document.getElementById('modelPicker');
 const resultModel      = document.getElementById('resultModel');
 const disclaimerText   = document.getElementById('disclaimerText');
 const changeLink       = document.getElementById('changeLink');
+const sampleRow        = document.getElementById('sampleRow');
 
 // ── Model Picker ──────────────────────────────────────────────────────────────
 function renderPicker() {
@@ -130,6 +143,31 @@ async function checkAvailability() {
         });
     } catch (e) {
         console.warn('Could not check model availability:', e);
+    }
+}
+
+// ── Sample Buttons ────────────────────────────────────────────────────────────
+function renderSamples() {
+    SAMPLES.forEach(s => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sample-btn';
+        btn.textContent = s.label;
+        btn.addEventListener('click', () => loadSample(s));
+        sampleRow.appendChild(btn);
+    });
+}
+
+async function loadSample(sample) {
+    try {
+        const res = await fetch(sample.file);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const name = sample.file.split('/').pop();
+        handleImageUpload(new File([blob], name, { type: 'image/png' }));
+    } catch (e) {
+        resultsContainer.innerHTML = `<div class="error">Sample image could not be loaded.<small></small></div>`;
+        resultsContainer.querySelector('small').textContent = e.message;
     }
 }
 
@@ -235,8 +273,15 @@ function renderResults(data) {
     resultModel.textContent   = `Result from: ${data.model_name}`;
     resultModel.style.display = 'block';
 
+    const warnings = [];
+    if (data.input_mismatch_warning) {
+        warnings.push("⚠️ This looks like a single grayscale slice. The corrected models expect three stacked slices (as in the sample scans), so this result is unreliable.");
+    }
     if (data.low_confidence_warning) {
-        warningBanner.innerText = "⚠️ Low confidence: no class scored clearly above the others for this model. Treat this result with caution.";
+        warnings.push("⚠️ Low confidence: no class scored clearly above the others for this model. Treat this result with caution.");
+    }
+    if (warnings.length) {
+        warningBanner.innerText = warnings.join('\n\n');
         warningBanner.style.display = 'block';
     }
 
@@ -282,4 +327,5 @@ function renderResults(data) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 renderPicker();
+renderSamples();
 checkAvailability();
