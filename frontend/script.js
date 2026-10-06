@@ -12,7 +12,7 @@ const MODELS = [
         tag: "Recommended",
         tagClass: "tag-good",
         description: "CN vs MCI vs AD, trained on 235 age-matched, CDR-rated subjects.",
-        metrics: [["Macro F1", "0.429"], ["Macro AUC", "0.723"]],
+        metrics: [["Macro F1", "0.469"], ["Macro AUC", "0.722"]],
         disclaimer: "Trained on 235 age-matched OASIS-1 subjects (5-fold subject-level CV).",
     },
     {
@@ -21,7 +21,7 @@ const MODELS = [
         tag: "Age-matched",
         tagClass: "tag-good",
         description: "Cognitively normal vs impaired (CDR ≥ 0.5), same 235 subjects. Merging the small MCI and AD classes improves performance.",
-        metrics: [["Macro F1", "0.684"], ["Macro AUC", "0.750"]],
+        metrics: [["Macro F1", "0.658"], ["Macro AUC", "0.733"]],
         disclaimer: "Trained on 235 age-matched OASIS-1 subjects (135 CN, 100 impaired; 5-fold subject-level CV).",
     },
     {
@@ -31,13 +31,13 @@ const MODELS = [
         tagClass: "tag-warn",
         description: "Included 201 young adults with no CDR rating as cognitively normal, so it partly learned age instead of disease. On this cohort, a model using only age reaches 0.83 AUC. Shown for comparison.",
         metrics: [["Macro F1 (single split)", "0.638"], ["Macro AUC (single split)", "0.811"]],
-        disclaimer: "Trained on OASIS-1 data that included 201 unrated young adults as controls, and evaluated on a single 66-scan test split. Its scores are inflated by age confounding. It also used different preprocessing, so its output on the sample scans is illustrative only.",
+        disclaimer: "Trained on OASIS-1 data that included 201 unrated young adults as controls, and evaluated on a single 66-scan test split. Its scores are inflated by age confounding. It also used different preprocessing (scans not atlas-registered), so its output on the sample scans is illustrative only.",
     },
 ];
 
 // ── Sample Scans ──────────────────────────────────────────────────────────────
-// PNGs in /samples, exported from the training .npz (three stacked axial slices
-// stored as the R, G and B channels, which is the input the corrected models expect).
+// PNGs in /samples: grayscale mid-axial slices from the training data
+// (atlas-registered, skull-stripped OASIS-1 volumes), the input the models expect.
 const SAMPLES = [
     { file: "samples/cn_1.png",  label: "CN 1" },
     { file: "samples/cn_2.png",  label: "CN 2" },
@@ -275,7 +275,7 @@ function renderResults(data) {
 
     const warnings = [];
     if (data.input_mismatch_warning) {
-        warnings.push("⚠️ This looks like a single grayscale slice. The corrected models expect three stacked slices (as in the sample scans), so this result is unreliable.");
+        warnings.push("⚠️ This image contains colour. The models were trained on grayscale MRI slices, so this result is unreliable.");
     }
     if (data.low_confidence_warning) {
         warnings.push("⚠️ Low confidence: no class scored clearly above the others for this model. Treat this result with caution.");
