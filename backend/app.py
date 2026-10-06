@@ -1,5 +1,6 @@
 import io
 import os
+import numpy as np
 import torch
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,6 +44,8 @@ MODEL_CONFIGS = {
         "path": os.environ.get("CORRECTED_MODEL_PATH", "alz_resnet18_3class_v2.pt"),
         "class_names": CLASS_NAMES,
         "confidence_threshold": 0.50,
+        # trained on three stacked axial slices (R, G, B = -12, 0, +12 from mid)
+        "expects_stacked": True,
     },
     "binary": {
         "name": "Corrected binary model (CN vs impaired)",
@@ -50,6 +53,7 @@ MODEL_CONFIGS = {
         "class_names": BINARY_CLASS_NAMES,
         # With two classes the top class is always >= 50%, so a higher bar is needed
         "confidence_threshold": 0.65,
+        "expects_stacked": True,
     },
     "original": {
         "name": "Original model (age-confounded)",
@@ -58,6 +62,8 @@ MODEL_CONFIGS = {
                                os.environ.get("MODEL_PATH", "best_alzheimer_model.pt")),
         "class_names": CLASS_NAMES,
         "confidence_threshold": 0.50,
+        # trained on single grayscale slices copied into all three channels
+        "expects_stacked": False,
     },
 }
 
@@ -69,11 +75,16 @@ DEFAULT_MODEL = "corrected"
 loaded_models = {}
 for model_id, cfg in MODEL_CONFIGS.items():
     if os.path.exists(cfg["path"]):
-        loaded_models[model_id] = get_alzheimer_model(
-            model_path=cfg["path"],
-            device=str(device),
-            num_classes=len(cfg["class_names"]),
-        )
+        try:
+            # model.py handles both bare weights and v2 checkpoint dicts
+            loaded_models[model_id] = get_alzheimer_model(
+                model_path=cfg["path"],
+                device=str(device),
+                num_classes=len(cfg["class_names"]),
+            )
+            print(f"[ok] Loaded '{model_id}' from '{cfg['path']}'")
+        except Exception as e:
+            print(f"[warn] Could not load '{model_id}' from '{cfg['path']}': {e}")
     else:
         print(f"[warn] Weights for '{model_id}' not found at '{cfg['path']}' — model disabled.")
 
@@ -140,6 +151,13 @@ async def predict(file: UploadFile = File(...), model: str = Form(DEFAULT_MODEL)
 
     cfg = MODEL_CONFIGS[model]
     class_names = cfg["class_names"]
+
+    # A grayscale upload has three identical channels. The corrected models were
+    # trained on three different stacked slices, so flag that mismatch.
+    arr = np.asarray(img, dtype=np.int16)
+    channels_identical = (np.abs(arr[..., 0] - arr[..., 1]).max() <= 2 and
+                          np.abs(arr[..., 1] - arr[..., 2]).max() <= 2)
+    input_mismatch = cfg["expects_stacked"] and channels_identical
     img_tensor = inference_transform(img).unsqueeze(0).to(device)
 
     with torch.no_grad():
@@ -156,6 +174,7 @@ async def predict(file: UploadFile = File(...), model: str = Form(DEFAULT_MODEL)
         "prediction":             top_class,
         "confidence_scores":      confidence_scores,
         "low_confidence_warning": top_confidence < cfg["confidence_threshold"],
+        "input_mismatch_warning": bool(input_mismatch),
         "disclaimer": (
             "Research prototype only. "
             "Not validated for clinical use."
