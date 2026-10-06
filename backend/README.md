@@ -25,11 +25,11 @@ This work was accepted for presentation at ICAAD 2026.
 
 | id | Task | Training data | Evaluation | Macro F1 | Macro AUC |
 |---|---|---|---|---|---|
-| `corrected` | CN / MCI / AD | 235 CDR-rated subjects (135 / 70 / 30) | 5-fold subject-level CV | 0.429 | 0.723 (95% CI 0.670–0.775) |
-| `binary` | CN / impaired (CDR ≥ 0.5) | Same 235 subjects (135 / 100) | 5-fold subject-level CV | 0.684 | 0.750 |
+| `corrected` | CN / MCI / AD | 235 CDR-rated subjects (135 / 70 / 30) | 5-fold subject-level CV | 0.469 | 0.722 (95% CI 0.670–0.776) |
+| `binary` | CN / impaired (CDR ≥ 0.5) | Same 235 subjects (135 / 100) | 5-fold subject-level CV | 0.658 | 0.733 |
 | `original` | CN / MCI / AD | Included 201 unrated young adults as CN | Single 66-scan test split | 0.638 | 0.811 |
 
-Macro F1 and AUC are reported instead of accuracy because the classes are imbalanced. On the corrected cohort, a decision threshold tuned for accuracy reached 58.3% accuracy while detecting no Alzheimer's cases at all.
+Macro F1 and AUC are reported instead of accuracy because the classes are imbalanced. In an earlier experiment on the corrected cohort, a decision threshold tuned for accuracy reached 58.3% accuracy while detecting no Alzheimer's cases at all.
 
 MCI is a proxy label (CDR 0.5), not a clinical diagnosis. AD is mostly CDR 1 (mild dementia).
 
@@ -37,22 +37,24 @@ MCI is a proxy label (CDR 0.5), not a clinical diagnosis. AD is mostly CDR 1 (mi
 
 | Cohort | Age-only model AUC | MRI model AUC | MRI minus age (95% CI) |
 |---|---|---|---|
-| Confounded (436 sessions) | 0.826 | 0.845 | +0.020 (−0.013 to +0.051), not significant |
-| Corrected (235 subjects) | 0.628 | 0.723 | +0.095 (+0.037 to +0.158), significant |
+| Confounded (436 sessions) | 0.826 | 0.860 | +0.034 (+0.004 to +0.065) |
+| Corrected (235 subjects) | 0.628 | 0.722 | +0.095 (+0.037 to +0.153) |
 
-On the confounded cohort, the MRI model could not be distinguished from logistic regression on age alone. On the corrected cohort, it outperforms age with a confidence interval that excludes zero. Both rows use the same preprocessing and 5-fold cross-validation; intervals are from 2,000 bootstrap resamples.
+On the confounded cohort, logistic regression on age alone reaches 0.826 of the MRI model's 0.860 AUC, so imaging adds only 0.034. Scored on the CDR-rated participants only, the same cohort-A predictions fall from 0.860 to 0.713. On the corrected cohort, imaging adds nearly three times as much over age. Both rows use the same preprocessing and 5-fold cross-validation; intervals are from 2,000 bootstrap resamples.
 
 ## Expected input
 
-The corrected and binary models expect a 224×224 RGB PNG in which each channel is a different axial slice:
+The corrected and binary models expect a grayscale 224×224 image of a single mid-axial slice:
 
 - Source: OASIS-1 `T88_111` atlas-registered, skull-stripped, gain-field-corrected volumes (`*_t88_masked_gfc`)
-- Red, green, blue: axial slices at −12, 0 and +12 from the middle slice
-- Each slice min-max scaled to 0–255
+- The middle axial slice, min-max scaled to 0–255
+- Copied into three channels and normalized with ImageNet statistics at inference
 
-A normal grayscale MRI image has three identical channels, so the API returns `input_mismatch_warning: true` for these models. Predictions on other images are unreliable. The sample scans on the website are in the correct format.
+Colour images return `input_mismatch_warning: true`. Slices that are not atlas-registered and skull-stripped are accepted but give unreliable predictions. The sample scans on the website are in the correct format.
 
-The original model was trained on single slices with different preprocessing.
+A three-slice variant (axial slices at −12, 0 and +12 stacked as channels) was also tested. It gave no consistent benefit and lower Alzheimer's recall in the 3-class task, so the deployed models use a single slice.
+
+The original model was trained on single slices that were not atlas-registered.
 
 ## API
 
@@ -87,7 +89,7 @@ Example response:
 
 - `app.py`: FastAPI server and model registry
 - `model.py`: ResNet-18 with a Dropout + Linear head; loads both bare and checkpoint-dict weights
-- `alz_resnet18_3class_v2.pt`, `alz_resnet18_binary_v2.pt`: corrected models, trained on all 235 subjects after cross-validation
+- `alz_resnet18_3class_v3.pt`, `alz_resnet18_binary_v3.pt`: corrected single-slice models, trained on all 235 subjects after cross-validation
 - `best_alzheimer_model.pt`: original model
 
 Weight paths can be overridden with `CORRECTED_MODEL_PATH`, `BINARY_MODEL_PATH` and `ORIGINAL_MODEL_PATH`.

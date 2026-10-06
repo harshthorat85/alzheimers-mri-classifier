@@ -41,19 +41,16 @@ BINARY_CLASS_NAMES = [
 MODEL_CONFIGS = {
     "corrected": {
         "name": "Corrected model (age-matched cohort)",
-        "path": os.environ.get("CORRECTED_MODEL_PATH", "alz_resnet18_3class_v2.pt"),
+        "path": os.environ.get("CORRECTED_MODEL_PATH", "alz_resnet18_3class_v3.pt"),
         "class_names": CLASS_NAMES,
         "confidence_threshold": 0.50,
-        # trained on three stacked axial slices (R, G, B = -12, 0, +12 from mid)
-        "expects_stacked": True,
     },
     "binary": {
         "name": "Corrected binary model (CN vs impaired)",
-        "path": os.environ.get("BINARY_MODEL_PATH", "alz_resnet18_binary_v2.pt"),
+        "path": os.environ.get("BINARY_MODEL_PATH", "alz_resnet18_binary_v3.pt"),
         "class_names": BINARY_CLASS_NAMES,
         # With two classes the top class is always >= 50%, so a higher bar is needed
         "confidence_threshold": 0.65,
-        "expects_stacked": True,
     },
     "original": {
         "name": "Original model (age-confounded)",
@@ -62,8 +59,6 @@ MODEL_CONFIGS = {
                                os.environ.get("MODEL_PATH", "best_alzheimer_model.pt")),
         "class_names": CLASS_NAMES,
         "confidence_threshold": 0.50,
-        # trained on single grayscale slices copied into all three channels
-        "expects_stacked": False,
     },
 }
 
@@ -90,8 +85,8 @@ for model_id, cfg in MODEL_CONFIGS.items():
 
 if not loaded_models:
     raise RuntimeError(
-        "No model weights found. Place alz_resnet18_3class_v2.pt, "
-        "alz_resnet18_binary_v2.pt and/or best_alzheimer_model.pt next to app.py, "
+        "No model weights found. Place alz_resnet18_3class_v3.pt, "
+        "alz_resnet18_binary_v3.pt and/or best_alzheimer_model.pt next to app.py, "
         "or set CORRECTED_MODEL_PATH / BINARY_MODEL_PATH / ORIGINAL_MODEL_PATH."
     )
 
@@ -152,12 +147,12 @@ async def predict(file: UploadFile = File(...), model: str = Form(DEFAULT_MODEL)
     cfg = MODEL_CONFIGS[model]
     class_names = cfg["class_names"]
 
-    # A grayscale upload has three identical channels. The corrected models were
-    # trained on three different stacked slices, so flag that mismatch.
+    # All models were trained on grayscale MRI slices (grey copied to 3 channels).
+    # A colour image has channels that differ, so flag it as out of distribution.
     arr = np.asarray(img, dtype=np.int16)
     channels_identical = (np.abs(arr[..., 0] - arr[..., 1]).max() <= 2 and
                           np.abs(arr[..., 1] - arr[..., 2]).max() <= 2)
-    input_mismatch = cfg["expects_stacked"] and channels_identical
+    input_mismatch = not channels_identical
     img_tensor = inference_transform(img).unsqueeze(0).to(device)
 
     with torch.no_grad():
