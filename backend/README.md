@@ -50,9 +50,9 @@ The corrected and binary models expect a grayscale 224×224 image of a single mi
 - The middle axial slice, min-max scaled to 0–255
 - Copied into three channels and normalized with ImageNet statistics at inference
 
-Colour images return `input_mismatch_warning: true`. Slices that are not atlas-registered and skull-stripped are accepted but give unreliable predictions. The sample scans on the website are in the correct format.
+Color images return `input_mismatch_warning: true`. Slices that are not atlas-registered and skull-stripped are accepted but give unreliable predictions. The sample scans on the website are in the correct format.
 
-A three-slice variant (axial slices at −12, 0 and +12 stacked as channels) was also tested. It gave no consistent benefit and lower Alzheimer's recall in the 3-class task, so the deployed models use a single slice.
+The deployed models use a single mid-axial slice, matching the protocol reported in the paper. A three-slice variant was explored but is not reported, as the single-slice control run for that comparison did not reproduce.
 
 The original model was trained on single slices that were not atlas-registered.
 
@@ -94,7 +94,7 @@ Example response:
 
 Weight paths can be overridden with `CORRECTED_MODEL_PATH`, `BINARY_MODEL_PATH` and `ORIGINAL_MODEL_PATH`.
 
-## Data acknowledgement
+## Data acknowledgment
 
 Data were provided by OASIS: Cross-Sectional. Principal Investigators: D. Marcus, R. Buckner, J. Csernansky, J. Morris; P50 AG05681, P01 AG03991, P01 AG026276, R01 AG021910, P20 MH071616, U24 RR021382.
 
