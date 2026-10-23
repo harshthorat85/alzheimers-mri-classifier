@@ -15,7 +15,7 @@ This is a research prototype. It is not validated for clinical diagnosis or pati
 
 ## Why there are three models
 
-The original model scored 79% accuracy, but the cohort it was trained on had a flaw: OASIS-1 records no Clinical Dementia Rating (CDR) for participants under 60, and those 201 young adults (mean age 27) were labelled cognitively normal. The healthy group was therefore about 30 years younger than the impaired groups, and the model partly learned age instead of disease.
+The original model scored 79% accuracy, but the cohort it was trained on had a flaw: OASIS-1 records no Clinical Dementia Rating (CDR) for 181 of its 416 participants — 201 sessions in all. Those participants are all under 60, and they were labeled cognitively normal. The healthy group was therefore about 30 years younger than the impaired groups, and the model partly learned age instead of disease.
 
 The corrected models are trained only on the 235 CDR-rated participants, whose group ages are much closer (mean 69, 76 and 78). The original model is kept so the two can be compared side by side.
 
