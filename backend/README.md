@@ -40,7 +40,7 @@ MCI is a proxy label (CDR 0.5), not a clinical diagnosis. AD is mostly CDR 1 (mi
 | Confounded (436 sessions) | 0.826 | 0.860 | +0.034 (+0.004 to +0.065) |
 | Corrected (235 subjects) | 0.628 | 0.722 | +0.095 (+0.037 to +0.153) |
 
-On the confounded cohort, logistic regression on age alone reaches 0.826 of the MRI model's 0.860 AUC, so imaging adds only 0.034. Scored on the CDR-rated participants only, the same cohort-A predictions fall from 0.860 to 0.713. On the corrected cohort, imaging adds nearly three times as much over age. Both rows use the same preprocessing and 5-fold cross-validation; intervals are from 2,000 bootstrap resamples.
+On the confounded cohort, logistic regression on age alone reaches an AUC of 0.826 against the MRI model’s 0.860, so imaging adds only 0.034. Scored on the CDR-rated participants only, the same cohort-A predictions fall from 0.860 to 0.713. On the corrected cohort, imaging adds nearly three times as much over age. Both rows use the same preprocessing and 5-fold cross-validation; intervals are from 2,000 bootstrap resamples.
 
 ## Expected input
 
