@@ -9,7 +9,7 @@ pinned: false
 
 # Alzheimer's Disease MRI Classifier
 
-FastAPI backend serving three fine-tuned ResNet-18 models that classify cognitive status from axial T1-weighted MRI slices of the OASIS-1 dataset. It powers the web demo at https://alzheimers-mri-classifier.netlify.app.
+FastAPI backend serving three fine-tuned ResNet-18 models that classify cognitive status from single T1-weighted MRI slices of the OASIS-1 dataset (axial for the corrected models; mid-sagittal for the original model). It powers the web demo at https://alzheimers-mri-classifier.netlify.app.
 
 This is a research prototype. It is not validated for clinical diagnosis or patient care.
 
@@ -27,9 +27,9 @@ This work was accepted for presentation at ICAAD 2026.
 |---|---|---|---|---|---|
 | `corrected` | CN / MCI / AD | 235 CDR-rated subjects (135 / 70 / 30) | 5-fold subject-level CV | 0.469 | 0.722 (95% CI 0.670–0.776) |
 | `binary` | CN / impaired (CDR ≥ 0.5) | Same 235 subjects (135 / 100) | 5-fold subject-level CV | 0.658 | 0.733 |
-| `original` | CN / MCI / AD | Included 201 unrated young adults as CN | Single 66-scan test split | 0.638 | 0.811 |
+| `original` | CN / MCI / AD | Included the 201 unrated sessions (181 young participants) as CN | Single 66-scan test split | 0.638 | 0.811 |
 
-Macro F1 and AUC are reported instead of accuracy because the classes are imbalanced. In an earlier experiment on the corrected cohort, a decision threshold tuned for accuracy reached 58.3% accuracy while detecting no Alzheimer's cases at all.
+Macro F1 and AUC are reported instead of accuracy because the classes are imbalanced. On the corrected cohort, the loss weighting with the highest accuracy (none, 0.596) detected only 7 of 30 Alzheimer’s cases, against 17 of 30 under the weighting with the lowest accuracy (full inverse-frequency, 0.515).
 
 MCI is a proxy label (CDR 0.5), not a clinical diagnosis. AD is mostly CDR 1 (mild dementia).
 
@@ -47,14 +47,15 @@ On the confounded cohort, logistic regression on age alone reaches 0.826 of the 
 The corrected and binary models expect a grayscale 224×224 image of a single mid-axial slice:
 
 - Source: OASIS-1 `T88_111` atlas-registered, skull-stripped, gain-field-corrected volumes (`*_t88_masked_gfc`)
-- The middle axial slice, min-max scaled to 0–255
+- The middle axial slice, min-max scaled to 0–255 per slice
 - Copied into three channels and normalized with ImageNet statistics at inference
+- Resized directly to 224×224 with no padding or cropping, which changes the in-plane aspect ratio (the source slice is 208×176)
 
 Color images return `input_mismatch_warning: true`. Slices that are not atlas-registered and skull-stripped are accepted but give unreliable predictions. The sample scans on the website are in the correct format.
 
 The deployed models use a single mid-axial slice, matching the protocol reported in the paper. A three-slice variant was explored but is not reported, as the single-slice control run for that comparison did not reproduce.
 
-The original model was trained on single slices that were not atlas-registered.
+The original model was trained on a different input. Its saved sanity-check images are mid-sagittal views of the whole head, skull and scalp included, not axial slices of atlas-registered, skull-stripped volumes. Axial samples from the website are therefore outside its training distribution, and its output on them should not be compared with the corrected models’ output on the same image.
 
 ## API
 
