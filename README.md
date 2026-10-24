@@ -92,6 +92,8 @@ Example response:
 - `alz_resnet18_3class_v3.pt`, `alz_resnet18_binary_v3.pt`: corrected single-slice models, trained on all 235 subjects after cross-validation
 - `best_alzheimer_model.pt`: original model
 
+backend/ is mirrored to the Hugging Face Space, which additionally holds the model weights. GitHub is canonical for code.
+
 Weight paths can be overridden with `CORRECTED_MODEL_PATH`, `BINARY_MODEL_PATH` and `ORIGINAL_MODEL_PATH`.
 
 ## Data acknowledgment
