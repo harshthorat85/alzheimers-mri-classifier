@@ -11,7 +11,7 @@ notebooks assume a GPU runtime and the file names used in the code
 | 3 | `03_weighting_ablation.ipynb` | step 1 output, spreadsheet | Class-weighting comparison (full inverse-frequency, square-root, none), all with label smoothing 0.05 |
 | 4 | `04_age_mri_stacking.ipynb` | OOF files from step 2 | Age + MRI stacking comparison |
 | - | `original_model.ipynb` | OASIS scan folders in Google Drive | The original model (`best_alzheimer_model.pt`) |
-| - | `archive/` | - | Superseded three-slice experiments; see its README |
+| - | `../archive/` | - | Superseded three-slice experiments; see its README |
 
 ## Expected results
 
