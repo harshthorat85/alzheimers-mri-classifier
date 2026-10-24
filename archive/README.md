@@ -15,4 +15,4 @@ These scripts are kept for the record only:
 - Metrics hardcoded in the v2 checkpoint metadata come from this superseded
   pipeline. Do not cite them as results of the paper.
 
-The paper's pipeline is in the parent folder.
+The paper's pipeline is in training/.
